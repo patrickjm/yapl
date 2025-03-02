@@ -1,14 +1,25 @@
-import { useState } from "react";
-import { z } from "zod";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CommonPropertiesForm } from "./YaplEditorCommon";
-import { MessagesEditor } from "./YaplEditorMessages";
-import { ChainsEditor } from "./YaplEditorChains";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
 import { toast } from "sonner";
+import { ChainsEditor } from "./YaplEditorChains";
+import { CommonPropertiesForm } from "./YaplEditorCommon";
+import { MessagesEditor } from "./YaplEditorMessages";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
 
 // Define types based on schema.ts
 type MessageContent = string | { [key: string]: any };
@@ -27,12 +38,15 @@ interface ChainData extends CommonProps {
 }
 
 interface ChainsData extends CommonProps {
-  chains: Record<string, {
-    dependsOn?: string[];
-    chain: {
-      messages: Message[];
-    };
-  }>;
+  chains: Record<
+    string,
+    {
+      dependsOn?: string[];
+      chain: {
+        messages: Message[];
+      };
+    }
+  >;
   messages?: undefined;
 }
 
@@ -45,8 +59,8 @@ const initialData: ChainData = {
   messages: [
     { system: "You are a helpful assistant." },
     { user: "Hello, how are you?" },
-    "output"
-  ]
+    "output",
+  ],
 };
 
 export function YaplEditor() {
@@ -55,31 +69,31 @@ export function YaplEditor() {
   const [yamlOutput, setYamlOutput] = useState("");
 
   const handleCommonPropertiesChange = (commonProps: CommonProps) => {
-    setEditorData(prev => ({
+    setEditorData((prev) => ({
       ...prev,
-      ...commonProps
+      ...commonProps,
     }));
   };
 
   const handleMessagesChange = (messages: Message[]) => {
-    if ('chains' in editorData) {
+    if ("chains" in editorData) {
       // Should not happen in practice due to UI constraints
       return;
     }
     setEditorData({
       ...editorData,
-      messages
+      messages,
     } as ChainData);
   };
 
   const handleChainsChange = (chains: Record<string, any>) => {
-    if (!('chains' in editorData)) {
+    if (!("chains" in editorData)) {
       // Should not happen in practice due to UI constraints
       return;
     }
     setEditorData({
       ...editorData,
-      chains
+      chains,
     } as ChainsData);
   };
 
@@ -92,27 +106,46 @@ export function YaplEditor() {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      
       <Tabs defaultValue="editor" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="editor">Editor</TabsTrigger>
           <TabsTrigger value="yaml">YAML Output</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="editor" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Editor Type</CardTitle>
-              <CardDescription>Choose between a single chain or multiple chains</CardDescription>
+              <CardDescription>
+                Choose between a single chain or multiple chains.
+                <br />
+                <Accordion type="single" collapsible>
+                  <AccordionItem value="help">
+                    <AccordionTrigger>
+                      <span className="text-sm text-muted-foreground">
+                        What's the difference?
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="text-sm text-muted-foreground">
+                        All YAPL programs are a collection of one or more chains
+                        of messages. If you have multiple chains of messages,
+                        you can use the output of one chain as input for
+                        another.
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex space-x-4">
-                <Button 
+                <Button
                   variant={editorType === "chain" ? "default" : "outline"}
                   onClick={() => {
                     setEditorType("chain");
                     // Remove chains if they exist when switching to chain mode
-                    if ('chains' in editorData) {
+                    if ("chains" in editorData) {
                       const { provider, model, inputs, tools } = editorData;
                       // Create a default messages array if switching from chains
                       setEditorData({
@@ -120,19 +153,20 @@ export function YaplEditor() {
                         model,
                         inputs,
                         tools,
-                        messages: []
+                        messages: [],
                       } as ChainData);
                     }
                   }}
                 >
                   Single Chain
                 </Button>
-                <Button 
+                <Button
                   variant={editorType === "chains" ? "default" : "outline"}
                   onClick={() => {
                     setEditorType("chains");
                     // Initialize chains when switching to chains mode
-                    const { messages, provider, model, inputs, tools } = editorData as ChainData;
+                    const { messages, provider, model, inputs, tools } =
+                      editorData as ChainData;
                     setEditorData({
                       provider,
                       model,
@@ -141,10 +175,10 @@ export function YaplEditor() {
                       chains: {
                         default: {
                           chain: {
-                            messages: messages || []
-                          }
-                        }
-                      }
+                            messages: messages || [],
+                          },
+                        },
+                      },
                     } as ChainsData);
                   }}
                 >
@@ -154,19 +188,19 @@ export function YaplEditor() {
             </CardContent>
           </Card>
 
-          <CommonPropertiesForm 
+          <CommonPropertiesForm
             data={editorData}
             onChange={handleCommonPropertiesChange}
           />
 
           {editorType === "chain" ? (
-            <MessagesEditor 
-              messages={('messages' in editorData) ? editorData.messages : []} 
+            <MessagesEditor
+              messages={"messages" in editorData ? editorData.messages : []}
               onChange={handleMessagesChange}
             />
           ) : (
-            <ChainsEditor 
-              chains={('chains' in editorData) ? editorData.chains : {}} 
+            <ChainsEditor
+              chains={"chains" in editorData ? editorData.chains : {}}
               onChange={handleChainsChange}
             />
           )}
