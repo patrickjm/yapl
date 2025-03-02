@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -63,6 +64,7 @@ const STORAGE_KEYS = {
   EDITOR_TYPE: "yapl_editor_type",
   EDITOR_DATA: "yapl_editor_data",
   YAML_OUTPUT: "yapl_editor_yaml",
+  WELCOME_MODAL_SEEN: "yapl_welcome_modal_seen",
 };
 
 export function App() {
@@ -85,6 +87,9 @@ export function App() {
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [provider, setProvider] = useState<string | null>(null);
 
+  // Welcome modal state
+  const [showWelcomeModal, setShowWelcomeModal] = useState<boolean>(false);
+
   // Load state from local storage on initial mount
   useEffect(() => {
     try {
@@ -106,10 +111,20 @@ export function App() {
       if (storedYamlOutput) {
         setYamlOutput(storedYamlOutput);
       }
+
+      // Check if welcome modal has been seen
+      const hasSeenWelcomeModal = localStorage.getItem(
+        STORAGE_KEYS.WELCOME_MODAL_SEEN
+      );
+      if (!hasSeenWelcomeModal) {
+        setShowWelcomeModal(true);
+      }
     } catch (error) {
       console.error("Error loading state from local storage:", error);
       // Fall back to initial data if there's an error
       setEditorData(initialData);
+      // Show welcome modal for new users even if there's an error
+      setShowWelcomeModal(true);
     }
   }, []);
 
@@ -354,6 +369,11 @@ export function App() {
     setCopilotHistory(history);
   };
 
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem(STORAGE_KEYS.WELCOME_MODAL_SEEN, "true");
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <header className="border-b border-border p-4 flex justify-between items-center shrink-0">
@@ -578,6 +598,113 @@ export function App() {
           onHistoryUpdate={handleCopilotHistoryUpdate}
         />
       )}
+
+      {/* Welcome Modal */}
+      <Dialog
+        open={showWelcomeModal}
+        onOpenChange={(open) => {
+          setShowWelcomeModal(open);
+          if (!open) {
+            localStorage.setItem(STORAGE_KEYS.WELCOME_MODAL_SEEN, "true");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Welcome to YAPL Editor
+            </DialogTitle>
+            <DialogDescription className="text-lg">
+              Your first time? Let's get you oriented.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 max-h-[60vh] overflow-y-auto pr-2">
+            <h3 className="font-semibold text-xl">What is YAPL?</h3>
+
+            <div className="space-y-3 text-base leading-relaxed">
+              <p>
+                YAPL is YAML Prompting Language - a declarative way to work with
+                AI models without writing code.
+              </p>
+              <p>
+                It's designed for engineers and prompt engineers who need
+                reliable, structured AI responses.
+              </p>
+              <p>
+                You define conversations with AI models using simple YAML
+                syntax.
+              </p>
+              <p>
+                You can chain multiple AI calls together to build complex
+                workflows.
+              </p>
+              <p>
+                It enforces JSON outputs with schemas so you get consistent,
+                parseable responses.
+              </p>
+              <p>
+                Think of it as LangChain but with 90% less code and complexity.
+              </p>
+            </div>
+
+            <h3 className="font-semibold text-xl mt-5">What's it good for?</h3>
+
+            <div className="space-y-3 text-base leading-relaxed">
+              <p>
+                Building AI agents that follow a specific conversation flow.
+              </p>
+              <p>
+                Creating structured data extraction tools from unstructured
+                text.
+              </p>
+              <p>
+                Setting up multi-step reasoning chains with dependencies between
+                steps.
+              </p>
+              <p>Prototyping AI workflows before implementing them in code.</p>
+              <p>
+                Sharing prompts with your team in a version-controllable format.
+              </p>
+            </div>
+
+            <h3 className="font-semibold text-xl mt-5">Using this editor</h3>
+
+            <div className="space-y-3 text-base leading-relaxed">
+              <p>
+                The left panel is where you build your YAML prompt structure.
+              </p>
+              <p>
+                The right panel lets you execute your prompts with real API keys
+                and see responses.
+              </p>
+              <p>
+                Start with "Chain" mode for simple conversations or "Chains" for
+                complex multi-step flows.
+              </p>
+              <p>
+                Set your provider (OpenAI/OpenRouter) and model (GPT-4/Claude)
+                at the top.
+              </p>
+              <p>
+                Add system and user messages to design your conversation flow.
+              </p>
+              <p>
+                Use the "YAPL Generator" button at the top to get AI help
+                building your YAPL files.
+              </p>
+              <p>
+                Check the README tab in the right panel for code examples to
+                integrate YAPL into your apps.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={handleCloseWelcomeModal}>Got it, let's go</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
