@@ -1,10 +1,11 @@
 {
-  "name": "yapl",
+  "name": "@yapl/monorepo",
   "module": "index.ts",
   "type": "module",
   "private": true,
   "workspaces": [
-    "yapl-js"
+    "yapl-js",
+    "yapl-editor"
   ],
   "devDependencies": {
     "@types/bun": "latest"
