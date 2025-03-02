@@ -1,5 +1,7 @@
 # yapl-js
 
+[![NPM Version](https://img.shields.io/npm/v/yapl-js)](https://www.npmjs.com/package/yapl-js)
+
 YAPL is a tool for prompting LLMs with Liquid-templated YAML files.
 
 ## JSON Output
