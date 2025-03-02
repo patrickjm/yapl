@@ -337,22 +337,31 @@ export function App() {
         <div className="flex-1 overflow-auto">
           {/* Help text for first-time users */}
           <div className="max-w-4xl mx-auto p-6">
-            <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-              <h2 className="text-lg font-medium mb-2 text-slate-700 dark:text-slate-300">
-                Welcome to YAPL Editor
-              </h2>
-              <p className="text-slate-600 dark:text-slate-400 text-sm">
+            <div className="mb-6 p-4 bg-card text-card-foreground rounded-lg border border-border shadow-sm transition-all duration-300 ease-in-out transform hover:shadow-md">
+              <div className="flex items-center mb-2">
+                <h2 className="text-lg font-semibold text-primary">
+                  Welcome to YAPL Editor
+                </h2>
+                <div
+                  className={`ml-2 w-2 h-2 rounded-full ${
+                    theme === "dark"
+                      ? "bg-primary animate-pulse"
+                      : "bg-primary opacity-80"
+                  }`}
+                ></div>
+              </div>
+              <p className="text-muted-foreground text-sm">
                 YAPL (YAML Prompt Language) is like a simpler, declarative
                 version of LangChain for working with LLMs. No Python or
                 JavaScript code needed!
               </p>
-              <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
+              <p className="text-muted-foreground text-sm mt-2">
                 It lets you prompt LLMs using YAML files with{" "}
                 <a
                   href="https://liquidjs.com/tutorials/intro-to-liquid-template-language.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline"
+                  className="text-primary hover:underline transition-colors duration-200"
                 >
                   Liquid Template
                 </a>{" "}
