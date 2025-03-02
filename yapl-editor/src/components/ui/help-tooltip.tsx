@@ -1,20 +1,30 @@
-import * as React from "react"
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./tooltip"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
 interface HelpTooltipProps {
-  explanation: string
-  className?: string
-  side?: "top" | "right" | "bottom" | "left"
+  explanation: string;
+  className?: string;
+  side?: "top" | "right" | "bottom" | "left";
 }
 
-export function HelpTooltip({ explanation, className, side = "top" }: HelpTooltipProps) {
+export function HelpTooltip({
+  explanation,
+  className,
+  side = "top",
+}: HelpTooltipProps) {
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
-            className={`inline-flex items-center justify-center rounded-full w-4 h-4 text-sm text-muted-foreground hover:text-foreground hover:bg-muted ${className ?? ""}`}
+            className={`inline-flex items-center justify-center rounded-full w-4 h-4 text-sm text-muted-foreground hover:text-foreground hover:bg-muted ${
+              className ?? ""
+            }`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -37,5 +47,5 @@ export function HelpTooltip({ explanation, className, side = "top" }: HelpToolti
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  )
-} 
+  );
+}
