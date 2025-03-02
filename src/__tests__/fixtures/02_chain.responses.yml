@@ -1,0 +1,11 @@
+- prompt: |
+    My favorite color is blue.
+    My favorite food is pizza.
+    My favorite drink is coffee.
+  response: |
+    { "favorites": ["blue", "pizza", "coffee"] }
+- prompt: |
+    Make these all capitalized:
+    ["blue","pizza","coffee"]
+  response: |
+    ["BLUE", "PIZZA", "COFFEE"]

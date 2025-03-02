@@ -1,0 +1,49 @@
+provider: test
+model: test
+chains:
+  default:
+    dependsOn: [favorites]
+    chain:
+      messages:
+        - user: |
+            Make these all capitalized:
+            {{ chains.favorites.outputs.default.value.favorites | stringify }}
+        - output:
+            format:
+              json: |
+                {
+                  "type": "object",
+                  "properties": {
+                    "favorites": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+  favorites:
+    chain:
+      messages:
+      - system: |
+          You are a favorites bot.
+          Your job is to capture anything the user tells you about their favorite things.
+      - user: |
+          My favorite color is blue.
+          My favorite food is pizza.
+          My favorite drink is coffee.
+      - output:
+          format:
+            json: |
+              {
+                "type": "object",
+                "properties": {
+                  "favorites": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+    

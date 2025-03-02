@@ -1,0 +1,10 @@
+provider: test
+model:
+  name: gpt-4o-mini
+  params:
+    temperature: 100
+messages:
+  - system: |
+      Hello
+  - user: |
+      World

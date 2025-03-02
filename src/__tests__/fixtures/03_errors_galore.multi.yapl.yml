@@ -1,0 +1,71 @@
+# Should error: Circular dependency
+provider: test
+model: test
+chains:
+  chain1:
+    dependsOn:
+      - chain2
+    chain:
+      messages:
+        - user: hello
+  chain2:
+    dependsOn:
+      - chain1
+    chain:
+      messages:
+        - user: world
+---
+# Should error: Unknown chain
+provider: test
+model: test
+chains:
+  chain1:
+    dependsOn:
+      - chain2
+    chain:
+      messages:
+        - user: hello
+---
+# Should error: Unknown provider
+provider: some-unknown-provider
+model: test
+messages:
+  - user: hello
+---
+# Should error: Duplicate output id
+provider: test
+model: test
+messages:
+  - user: hello
+  - output:
+      id: "123"
+  - user: world
+  - output:
+      id: "123"
+---
+# Should error: named "default" output before last output
+provider: test
+model: test
+messages:
+  - user: hello
+  - output:
+      id: "default"
+  - user: world
+  - output:
+      id: "123"
+---
+# Should error: Inputs conflict with builtins
+provider: test
+model: test
+inputs:
+  - "chains"
+messages:
+  - user: hello
+---
+# Should error: Inputs conflict with builtins
+provider: test
+model: test
+inputs:
+  - "outputs"
+messages:
+  - user: hello

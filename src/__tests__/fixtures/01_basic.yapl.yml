@@ -1,0 +1,19 @@
+provider: test
+model: test
+messages:
+  - system: |
+      You are a helpful assistant.
+      The weather in Tokyo is 2000 degrees Celsius.
+  - user: |
+      Tell me the weather in Tokyo.
+  - output:
+      format:
+        json: |
+          {
+            "type": "object",
+            "properties": {
+              "temperature": {
+                "type": "number"
+              }
+            }
+          }

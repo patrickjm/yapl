@@ -1,0 +1,50 @@
+{
+  "name": "yapl-js",
+  "module": "src/index.ts",
+  "type": "module",
+  "version": "0.0.1-alpha.1",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "packageManager": "bun@1.2.4",
+  "scripts": {
+    "compileJsonschema": "bun -e \"console.log(JSON.stringify(require('zod-to-json-schema').default(require('./src/schema.ts').schema), null, 2))\" > ./dist/schema.json",
+    "build": "rm -rf dist && tsc && bun build --target=node --outdir=dist --sourcemap -e openai src/index.ts src/providers.ts && bun run compileJsonschema",
+    "watch": "nodemon --watch src --exec \"bun run build\" --ext ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "zod": "^3.23.8",
+    "openai": ">= 4.56"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "jsonschema": "^1.4.1",
+    "liquidjs": "^10.16.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.2",
+    "openai": "^4.56.1"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "@types/json-schema": "^7.0.15",
+    "nodemon": "^3.1.4",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,2 @@
+- prompt: "Tell me the weather in Tokyo."
+  response: "{ \"temperature\": 2000 }"
