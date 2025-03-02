@@ -1,0 +1,67 @@
+{
+  "name": "yapl-js",
+  "module": "src/index.ts",
+  "type": "module",
+  "version": "0.0.1-alpha.3",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "packageManager": "bun@1.2.4",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/patrickjm/yapl.git"
+  },
+  "scripts": {
+    "compileJsonschema": "bun -e \"console.log(JSON.stringify(require('zod-to-json-schema').default(require('./src/schema.ts').schema), null, 2))\" > ./dist/schema.json",
+    "build": "rm -rf dist && tsc && bun run build:node && bun run build:browser && bun run compileJsonschema",
+    "build:node": "bun build --target=node --outdir=dist --sourcemap -e openai src/index.ts src/providers.ts",
+    "build:browser": "bun build --target=browser --outdir=dist/browser --sourcemap -e openai src/index.ts src/providers.ts",
+    "watch": "nodemon --watch src --exec \"bun run build\" --ext ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": "./dist/browser/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./dist/providers/openai": {
+      "browser": "./dist/browser/providers/openai.js",
+      "require": "./dist/providers/openai.js",
+      "default": "./dist/providers/openai.js"
+    },
+    "./dist/providers/openrouter": {
+      "browser": "./dist/browser/providers/openrouter.js",
+      "require": "./dist/providers/openrouter.js",
+      "default": "./dist/providers/openrouter.js"
+    }
+  },
+  "peerDependencies": {
+    "zod": "^3.23.8",
+    "openai": ">= 4.56"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "jsonschema": "^1.4.1",
+    "liquidjs": "^10.16.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.2",
+    "openai": "^4.56.1"
+  },
+  "peerDependenciesMeta": {
+    "openai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "@types/json-schema": "^7.0.15",
+    "nodemon": "^3.1.4",
+    "typescript": "^5.0.0"
+  }
+}

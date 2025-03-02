@@ -2,15 +2,15 @@ import fs from "fs";
 import yaml from "js-yaml";
 import { Liquid } from "liquidjs";
 import path from "path";
+import { DEFAULT_CHAIN_ID, DEFAULT_OUTPUT_ID } from "./constants";
 import { executeChain } from "./execute-chain";
-import { Provider, type BuiltinInputs, type CallResult, type Cost, type Inputs, type Message, type Model, type Tool, type YaplCache, type YaplLogger, type YaplProgram } from "./public-types";
+import { Provider, type BuiltinInputs, type CallResult, type Cost, type Inputs, type Model, type Tool, type YaplCache, type YaplLogger, type YaplProgram } from "./public-types";
 import { schema, type Schema } from "./schema";
 import { addCost, toModel } from "./utils";
 import { validateSchema } from "./validation";
-import { DEFAULT_CHAIN_ID, DEFAULT_OUTPUT_ID } from "./constants";
 
+export * from "./providers";
 export * from "./public-types";
-export type * from "./public-types";
 
 
 export interface YaplOptions {
