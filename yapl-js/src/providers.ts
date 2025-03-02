@@ -1,6 +1,6 @@
-import { Provider, type AssistantMessage, type Cost, type Message, type ProviderExecuteParams, type ToolMessage } from "./public-types";
-import OpenAI from "openai";
+import OpenAI, { type ClientOptions } from "openai";
 import type { ChatCompletionCreateParamsBase, ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import { Provider, type AssistantMessage, type Cost, type Message, type ProviderExecuteParams, type ToolMessage } from "./public-types";
 
 export class OpenAIProvider extends Provider {
   private openai: OpenAI;
@@ -8,11 +8,16 @@ export class OpenAIProvider extends Provider {
     name: string = "openai",
     private apiKey: string,
     private baseUrl: string = "https://api.openai.com/v1",
+    options?: Partial<ClientOptions>
   ) {
     super(name)
+    if (!baseUrl) {
+      throw new Error("baseUrl is required")
+    }
     this.openai = new OpenAI({
       apiKey,
       baseURL: this.baseUrl,
+      ...options,
     })
   }
 
@@ -81,5 +86,16 @@ export class OpenAIProvider extends Provider {
         tokens: 0,
       }
     ]
+  }
+}
+
+export class OpenRouterProvider extends OpenAIProvider {
+  constructor(
+    name: string = "openrouter",
+    apiKey: string,
+    baseUrl: string = "https://openrouter.ai/api/v1",
+    options?: Partial<ClientOptions>
+  ) {
+    super(name, apiKey, baseUrl, options)
   }
 }

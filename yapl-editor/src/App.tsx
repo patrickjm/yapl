@@ -38,7 +38,7 @@ type YaplData = ChainData | ChainsData;
 // Sample initial data
 const initialData: ChainData = {
   provider: "openrouter",
-  model: "openai/gpt4o-mini",
+  model: "openai/gpt-4o-mini",
   messages: [
     { system: "You are a helpful assistant." },
     { user: "Hello, how are you?" },

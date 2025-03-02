@@ -34,7 +34,7 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
     const storedAuthSuccess = sessionStorage.getItem("openrouterAuthSuccess");
     const storedAuthTimestamp = sessionStorage.getItem("openrouterAuthTimestamp");
     
-    if (storedKey) {
+    if (storedKey && !apiKey) {
       setApiKey(storedKey);
       onApiKeyChange(storedKey);
     }
@@ -46,7 +46,7 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
     if (storedAuthTimestamp) {
       setLastAuthTimestamp(parseInt(storedAuthTimestamp, 10));
     }
-  }, [onApiKeyChange]);
+  }, []);
 
   // Check for OpenRouter auth code in URL on mount and verifier change
   useEffect(() => {

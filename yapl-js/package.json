@@ -17,14 +17,27 @@
   },
   "scripts": {
     "compileJsonschema": "bun -e \"console.log(JSON.stringify(require('zod-to-json-schema').default(require('./src/schema.ts').schema), null, 2))\" > ./dist/schema.json",
-    "build": "rm -rf dist && tsc && bun build --target=node --outdir=dist --sourcemap -e openai src/index.ts src/providers.ts && bun run compileJsonschema",
+    "build": "rm -rf dist && tsc && bun run build:node && bun run build:browser && bun run compileJsonschema",
+    "build:node": "bun build --target=node --outdir=dist --sourcemap -e openai src/index.ts src/providers.ts",
+    "build:browser": "bun build --target=browser --outdir=dist/browser --sourcemap -e openai src/index.ts src/providers.ts",
     "watch": "nodemon --watch src --exec \"bun run build\" --ext ts"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/browser/index.js",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./dist/providers/openai": {
+      "browser": "./dist/browser/providers/openai.js",
+      "require": "./dist/providers/openai.js",
+      "default": "./dist/providers/openai.js"
+    },
+    "./dist/providers/openrouter": {
+      "browser": "./dist/browser/providers/openrouter.js",
+      "require": "./dist/providers/openrouter.js",
+      "default": "./dist/providers/openrouter.js"
     }
   },
   "peerDependencies": {
