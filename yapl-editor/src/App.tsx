@@ -13,6 +13,7 @@ import YAML from "js-yaml";
 import { UploadCloud } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { YaplCopilot } from "./components/copilot/YaplCopilot";
 import "./index.css";
 
 // Define YaplData type
@@ -76,29 +77,37 @@ export function App() {
   const [importYamlContent, setImportYamlContent] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load state from session storage on initial mount
+  // Copilot state
+  const [showCopilot, setShowCopilot] = useState<boolean>(false);
+  const [copilotHistory, setCopilotHistory] = useState<
+    Array<{ role: string; content: string }>
+  >([]);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [provider, setProvider] = useState<string | null>(null);
+
+  // Load state from local storage on initial mount
   useEffect(() => {
     try {
       // Load editor type
-      const storedEditorType = sessionStorage.getItem(STORAGE_KEYS.EDITOR_TYPE);
+      const storedEditorType = localStorage.getItem(STORAGE_KEYS.EDITOR_TYPE);
       if (storedEditorType === "chain" || storedEditorType === "chains") {
         setEditorType(storedEditorType);
       }
 
       // Load editor data
-      const storedEditorData = sessionStorage.getItem(STORAGE_KEYS.EDITOR_DATA);
+      const storedEditorData = localStorage.getItem(STORAGE_KEYS.EDITOR_DATA);
       if (storedEditorData) {
         const parsedData = JSON.parse(storedEditorData) as YaplData;
         setEditorData(parsedData);
       }
 
       // Load YAML output
-      const storedYamlOutput = sessionStorage.getItem(STORAGE_KEYS.YAML_OUTPUT);
+      const storedYamlOutput = localStorage.getItem(STORAGE_KEYS.YAML_OUTPUT);
       if (storedYamlOutput) {
         setYamlOutput(storedYamlOutput);
       }
     } catch (error) {
-      console.error("Error loading state from session storage:", error);
+      console.error("Error loading state from local storage:", error);
       // Fall back to initial data if there's an error
       setEditorData(initialData);
     }
@@ -107,11 +116,7 @@ export function App() {
   useEffect(() => {
     // Check for stored theme preference
     const storedTheme = localStorage.getItem("theme");
-    if (
-      storedTheme === "dark" ||
-      (!storedTheme &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
+    if (storedTheme === "dark") {
       setTheme("dark");
       document.documentElement.classList.add("dark");
     } else {
@@ -125,17 +130,14 @@ export function App() {
     const yaml = YAML.dump(editorData);
     setYamlOutput(yaml);
 
-    // Save to session storage
-    sessionStorage.setItem(
-      STORAGE_KEYS.EDITOR_DATA,
-      JSON.stringify(editorData)
-    );
-    sessionStorage.setItem(STORAGE_KEYS.YAML_OUTPUT, yaml);
+    // Save to local storage
+    localStorage.setItem(STORAGE_KEYS.EDITOR_DATA, JSON.stringify(editorData));
+    localStorage.setItem(STORAGE_KEYS.YAML_OUTPUT, yaml);
   }, [editorData]);
 
-  // Save editor type to session storage when it changes
+  // Save editor type to local storage when it changes
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.EDITOR_TYPE, editorType);
+    localStorage.setItem(STORAGE_KEYS.EDITOR_TYPE, editorType);
   }, [editorType]);
 
   const toggleTheme = () => {
@@ -233,6 +235,125 @@ export function App() {
     }
   };
 
+  // Get API key and provider from the execution sidebar
+  const handleAuthInfoUpdate = (info: { apiKey: string; provider: string }) => {
+    setApiKey(info.apiKey);
+    setProvider(info.provider);
+  };
+
+  // Toggle copilot visibility with keyboard shortcut (Cmd+P or Ctrl+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "p") {
+        e.preventDefault();
+        setShowCopilot((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Apply YAPL changes from copilot
+  const handleCopilotYaplUpdate = (updatedYapl: YaplData) => {
+    console.log("Received YAPL update from copilot:", updatedYapl);
+
+    try {
+      // Deep clone the updated YAPL to avoid reference issues
+      const processedYapl = JSON.parse(JSON.stringify(updatedYapl));
+
+      // Determine the type and set editor type accordingly
+      let yaplType: "chain" | "chains" = "chain"; // Default
+
+      if (
+        "messages" in processedYapl &&
+        Array.isArray(processedYapl.messages)
+      ) {
+        // It's a chain type YAPL
+        yaplType = "chain";
+        console.log("Processing ChainData YAPL");
+      } else if (
+        "chains" in processedYapl &&
+        typeof processedYapl.chains === "object" &&
+        processedYapl.chains !== null
+      ) {
+        // It's a chains type YAPL
+        yaplType = "chains";
+        console.log("Processing ChainsData YAPL");
+      } else {
+        console.warn(
+          "YAPL doesn't match expected structure, defaulting to chain type"
+        );
+        // Initialize with empty messages array if not present
+        if (!("messages" in processedYapl)) {
+          processedYapl.messages = [];
+        }
+      }
+
+      // Update editor type if needed
+      if (editorType !== yaplType) {
+        console.log(`Changing editor type from ${editorType} to ${yaplType}`);
+        setEditorType(yaplType);
+      }
+
+      // Extract common properties
+      const commonProps: CommonProps = {};
+      if (processedYapl.provider) commonProps.provider = processedYapl.provider;
+      if (processedYapl.model) commonProps.model = processedYapl.model;
+      if (processedYapl.inputs) commonProps.inputs = processedYapl.inputs;
+      if (processedYapl.tools) commonProps.tools = processedYapl.tools;
+
+      console.log("Updating common properties:", commonProps);
+
+      // Directly set the full editor data to ensure complete replacement
+      if (yaplType === "chain") {
+        const chainData: ChainData = {
+          ...commonProps,
+          messages:
+            "messages" in processedYapl && Array.isArray(processedYapl.messages)
+              ? processedYapl.messages
+              : [],
+        };
+        console.log("Setting editor data with ChainData:", chainData);
+        setEditorData(chainData);
+      } else {
+        const chainsData: ChainsData = {
+          ...commonProps,
+          chains:
+            "chains" in processedYapl &&
+            typeof processedYapl.chains === "object" &&
+            processedYapl.chains !== null
+              ? processedYapl.chains
+              : {},
+        };
+        console.log("Setting editor data with ChainsData:", chainsData);
+        setEditorData(chainsData);
+      }
+
+      // Generate YAML from the updated editor data
+      const yaml = YAML.dump(processedYapl);
+      setYamlOutput(yaml);
+
+      // Save to localStorage
+      localStorage.setItem(
+        STORAGE_KEYS.EDITOR_DATA,
+        JSON.stringify(processedYapl)
+      );
+      localStorage.setItem(STORAGE_KEYS.YAML_OUTPUT, yaml);
+
+      console.log("YAPL update complete.");
+    } catch (error) {
+      console.error("Error updating YAPL data:", error);
+    }
+  };
+
+  // Update copilot conversation history
+  const handleCopilotHistoryUpdate = (
+    history: Array<{ role: string; content: string }>
+  ) => {
+    setCopilotHistory(history);
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <header className="border-b border-border p-4 flex justify-between items-center shrink-0">
@@ -286,6 +407,21 @@ export function App() {
             <UploadCloud className="h-4 w-4" />
             Import YAML
           </Button>
+
+          {/* YAPL Generator button moved to top bar */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCopilot(true)}
+            className="flex items-center gap-1"
+            title="Open YAPL Copilot (Cmd+P / Ctrl+P)"
+          >
+            <span role="img" aria-label="copilot" className="text-sm">
+              🤖
+            </span>
+            YAPL Generator
+          </Button>
+
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-muted transition-colors"
@@ -382,7 +518,10 @@ export function App() {
         </div>
 
         <div className="w-96 h-full border-l border-border overflow-hidden flex-shrink-0">
-          <YaplExecutionSidebar data={editorData} />
+          <YaplExecutionSidebar
+            data={editorData}
+            onAuthInfoUpdate={handleAuthInfoUpdate}
+          />
         </div>
       </div>
 
@@ -426,6 +565,19 @@ export function App() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Copilot Popover */}
+      {showCopilot && (
+        <YaplCopilot
+          apiKey={apiKey}
+          provider={provider}
+          currentYapl={editorData}
+          onClose={() => setShowCopilot(false)}
+          onYaplUpdate={handleCopilotYaplUpdate}
+          conversationHistory={copilotHistory}
+          onHistoryUpdate={handleCopilotHistoryUpdate}
+        />
+      )}
     </div>
   );
 }

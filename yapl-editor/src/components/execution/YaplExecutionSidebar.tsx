@@ -21,6 +21,7 @@ import { OpenRouterAuth } from "./OpenRouterAuth";
 
 interface YaplExecutionSidebarProps {
   data: YaplData;
+  onAuthInfoUpdate?: (info: { apiKey: string; provider: string }) => void;
 }
 
 // Custom type for execution log entries
@@ -87,7 +88,10 @@ class UILogger implements YaplLogger {
   }
 }
 
-export function YaplExecutionSidebar({ data }: YaplExecutionSidebarProps) {
+export function YaplExecutionSidebar({
+  data,
+  onAuthInfoUpdate,
+}: YaplExecutionSidebarProps) {
   const [apiKey, setApiKey] = useState<string>("");
   const [isExecuting, setIsExecuting] = useState<boolean>(false);
   const [executionLogs, setExecutionLogs] = useState<LogEntry[]>([]);
@@ -140,6 +144,15 @@ export function YaplExecutionSidebar({ data }: YaplExecutionSidebarProps) {
 
   const handleApiKeyChange = (newApiKey: string) => {
     setApiKey(newApiKey);
+    localStorage.setItem("openai-key", newApiKey);
+
+    // Notify parent component about auth info update
+    if (onAuthInfoUpdate) {
+      onAuthInfoUpdate({
+        apiKey: newApiKey,
+        provider: data.provider || "openai", // Use the provider from data instead of hardcoding "openai"
+      });
+    }
     // Clear previous execution results when API key changes
     setExecutionLogs([]);
     setExecutionResult(null);

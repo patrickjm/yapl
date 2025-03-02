@@ -9,9 +9,9 @@ interface OpenAIAuthProps {
 export function OpenAIAuth({ onApiKeyChange }: OpenAIAuthProps) {
   const [apiKey, setApiKey] = useState<string>("");
 
-  // Load API key from session storage on mount
+  // Load API key from local storage on mount
   useEffect(() => {
-    const storedKey = sessionStorage.getItem("openaiApiKey");
+    const storedKey = localStorage.getItem("openaiApiKey");
     if (storedKey) {
       setApiKey(storedKey);
       onApiKeyChange(storedKey);
@@ -22,7 +22,7 @@ export function OpenAIAuth({ onApiKeyChange }: OpenAIAuthProps) {
   const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const key = e.target.value;
     setApiKey(key);
-    sessionStorage.setItem("openaiApiKey", key);
+    localStorage.setItem("openaiApiKey", key);
     onApiKeyChange(key);
   };
 

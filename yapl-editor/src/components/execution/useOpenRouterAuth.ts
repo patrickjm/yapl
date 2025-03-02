@@ -19,20 +19,20 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
     };
 
     // Check if we have a stored code verifier
-    const storedVerifier = sessionStorage.getItem("openrouterCodeVerifier");
+    const storedVerifier = localStorage.getItem("openrouterCodeVerifier");
     if (storedVerifier) {
       setCodeVerifier(storedVerifier);
     } else {
       // Generate a new one and store it
       const newVerifier = generateRandomString(64);
-      sessionStorage.setItem("openrouterCodeVerifier", newVerifier);
+      localStorage.setItem("openrouterCodeVerifier", newVerifier);
       setCodeVerifier(newVerifier);
     }
     
     // Load previous auth data
-    const storedKey = sessionStorage.getItem("openrouterApiKey");
-    const storedAuthSuccess = sessionStorage.getItem("openrouterAuthSuccess");
-    const storedAuthTimestamp = sessionStorage.getItem("openrouterAuthTimestamp");
+    const storedKey = localStorage.getItem("openrouterApiKey");
+    const storedAuthSuccess = localStorage.getItem("openrouterAuthSuccess");
+    const storedAuthTimestamp = localStorage.getItem("openrouterAuthTimestamp");
     
     if (storedKey && !apiKey) {
       setApiKey(storedKey);
@@ -79,11 +79,11 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
             onApiKeyChange(key);
             
             // Store auth data
-            sessionStorage.setItem("openrouterApiKey", key);
+            localStorage.setItem("openrouterApiKey", key);
             
             const timestamp = Date.now();
-            sessionStorage.setItem("openrouterAuthSuccess", "true");
-            sessionStorage.setItem("openrouterAuthTimestamp", timestamp.toString());
+            localStorage.setItem("openrouterAuthSuccess", "true");
+            localStorage.setItem("openrouterAuthTimestamp", timestamp.toString());
             
             setAuthSuccess(true);
             setLastAuthTimestamp(timestamp);
@@ -92,11 +92,11 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
             window.history.replaceState({}, document.title, window.location.pathname);
           } else {
             console.error("Failed to exchange code for key");
-            sessionStorage.setItem("openrouterAuthSuccess", "false");
+            localStorage.setItem("openrouterAuthSuccess", "false");
           }
         } catch (error) {
           console.error("Error exchanging code", error);
-          sessionStorage.setItem("openrouterAuthSuccess", "false");
+          localStorage.setItem("openrouterAuthSuccess", "false");
         } finally {
           setAuthInProgress(false);
         }
@@ -110,7 +110,7 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
   const handleApiKeyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const key = e.target.value;
     setApiKey(key);
-    sessionStorage.setItem("openrouterApiKey", key);
+    localStorage.setItem("openrouterApiKey", key);
     onApiKeyChange(key);
   }, [onApiKeyChange]);
 
@@ -131,12 +131,12 @@ export function useOpenRouterAuth(onApiKeyChange: (apiKey: string) => void) {
     try {
       setAuthInProgress(true);
       
-      // Make sure we have a code verifier in session storage
-      if (!sessionStorage.getItem("openrouterCodeVerifier") && codeVerifier) {
-        sessionStorage.setItem("openrouterCodeVerifier", codeVerifier);
+      // Make sure we have a code verifier in local storage
+      if (!localStorage.getItem("openrouterCodeVerifier") && codeVerifier) {
+        localStorage.setItem("openrouterCodeVerifier", codeVerifier);
       }
       
-      const verifierToUse = sessionStorage.getItem("openrouterCodeVerifier") || codeVerifier;
+      const verifierToUse = localStorage.getItem("openrouterCodeVerifier") || codeVerifier;
       const codeChallenge = await createSHA256CodeChallenge(verifierToUse);
       const callbackUrl = window.location.origin + window.location.pathname;
       

@@ -49,7 +49,7 @@ export function OpenRouterAuth({ onApiKeyChange }: OpenRouterAuthProps) {
           <div className="flex flex-col gap-2">
             <p className="text-xs text-muted-foreground">
               <Lock className="inline h-3 w-3 mr-1" />
-              Your API key is securely stored in session storage.
+              Your API key is securely stored in local storage.
             </p>
             {authSuccess && formattedAuthTime && (
               <p className="text-xs text-green-600 dark:text-green-400">
