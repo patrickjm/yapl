@@ -2,7 +2,7 @@
   "name": "yapl-js",
   "module": "src/index.ts",
   "type": "module",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.3",
   "files": [
     "dist",
     "src",
@@ -13,7 +13,7 @@
   "packageManager": "bun@1.2.4",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yapl-js/yapl-js.git"
+    "url": "https://github.com/patrickjm/yapl.git"
   },
   "scripts": {
     "compileJsonschema": "bun -e \"console.log(JSON.stringify(require('zod-to-json-schema').default(require('./src/schema.ts').schema), null, 2))\" > ./dist/schema.json",
