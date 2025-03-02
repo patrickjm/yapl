@@ -67,7 +67,7 @@ const engine = new Yapl({
   logger: _logger
 });
 
-// We can register our own liquid templates if we want! 
+// We can register our own liquid filters if we want! 
 // You can see this get used in the yapl file above.
 // In this case, it lets us pass the actual zod schema to the yapl file, 
 // then inline its jsonschema in LLM prompts.
