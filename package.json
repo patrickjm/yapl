@@ -11,6 +11,10 @@
     "tsconfig.json"
   ],
   "packageManager": "bun@1.2.4",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yapl-js/yapl-js.git"
+  },
   "scripts": {
     "compileJsonschema": "bun -e \"console.log(JSON.stringify(require('zod-to-json-schema').default(require('./src/schema.ts').schema), null, 2))\" > ./dist/schema.json",
     "build": "rm -rf dist && tsc && bun build --target=node --outdir=dist --sourcemap -e openai src/index.ts src/providers.ts && bun run compileJsonschema",
