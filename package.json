@@ -12,5 +12,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@radix-ui/react-tooltip": "^1.1.8"
   }
 }
