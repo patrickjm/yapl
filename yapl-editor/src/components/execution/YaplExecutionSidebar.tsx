@@ -1,12 +1,26 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import yaml from "js-yaml";
-import { AlertCircle, CheckCircle2, Eye, Loader2, Play } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Database,
+  Eye,
+  Loader2,
+  Play,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
@@ -101,6 +115,14 @@ export function YaplExecutionSidebar({
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
   const logsEndRef = useRef<HTMLDivElement>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [expandedOutputs, setExpandedOutputs] = useState<Set<string>>(
+    new Set()
+  );
+  const [selectedOutput, setSelectedOutput] = useState<{
+    chainId: string;
+    outputId: string;
+    content: any;
+  } | null>(null);
 
   // Initialize input values based on data.inputs
   useEffect(() => {
@@ -336,70 +358,197 @@ export function YaplExecutionSidebar({
     );
   };
 
+  const toggleOutputExpansion = (outputId: string) => {
+    const newExpandedOutputs = new Set(expandedOutputs);
+    if (expandedOutputs.has(outputId)) {
+      newExpandedOutputs.delete(outputId);
+    } else {
+      newExpandedOutputs.add(outputId);
+    }
+    setExpandedOutputs(newExpandedOutputs);
+  };
+
+  const openOutputModal = (chainId: string, outputId: string, content: any) => {
+    setSelectedOutput({ chainId, outputId, content });
+  };
+
+  const closeOutputModal = () => {
+    setSelectedOutput(null);
+  };
+
   const renderResult = () => {
     if (!executionResult) return null;
 
-    // Extract the output property if it exists
-    const output = executionResult.output || null;
+    // Debug the structure of results
+    console.log("Full execution result:", executionResult);
+
+    // Extract chain results
+    const chainResults = executionResult.chains || {};
+    const hasChains = Object.keys(chainResults).length > 0;
+
+    console.log("Chain results:", chainResults);
 
     return (
       <div className="space-y-4">
-        {/* Display the output property if it exists */}
-        {output && (
+        {/* Chain outputs browser */}
+        {hasChains && (
           <Card className="p-4">
-            <h4 className="text-md font-medium mb-2 flex items-center gap-2">
+            <h4 className="text-md font-medium mb-3 flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-green-500" />
-              result.output
+              Chain Outputs
             </h4>
-            <p className="text-sm text-muted-foreground">
-              Output comes from the output with id <code>default</code>, or the
-              last output in the program.
-            </p>
-            <div className="bg-muted p-3 rounded text-sm font-mono overflow-x-auto whitespace-pre-wrap max-h-[200px] overflow-y-auto">
-              {typeof output === "object" ? (
-                <SyntaxHighlighter
-                  language="json"
-                  style={theme === "dark" ? vscDarkPlus : oneLight}
-                  customStyle={{
-                    margin: 0,
-                    padding: 0,
-                    background: "transparent",
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {JSON.stringify(output, null, 2)}
-                </SyntaxHighlighter>
-              ) : (
-                String(output)
-              )}
+
+            <div className="space-y-3">
+              {Object.entries(chainResults).map(([chainId, chainResult]) => {
+                console.log(`Chain ${chainId} result:`, chainResult);
+
+                // Type check and default for outputs
+                const chainResultObj =
+                  typeof chainResult === "object" && chainResult
+                    ? chainResult
+                    : {};
+
+                // YAPL structure may have outputs directly or in result.outputs
+                let outputs = {};
+                if ("outputs" in chainResultObj) {
+                  outputs = chainResultObj.outputs || {};
+                } else if (
+                  "result" in chainResultObj &&
+                  typeof chainResultObj.result === "object" &&
+                  chainResultObj.result
+                ) {
+                  // Try to get outputs from result property
+                  const resultObj = chainResultObj.result as Record<
+                    string,
+                    unknown
+                  >;
+                  outputs =
+                    "outputs" in resultObj
+                      ? (resultObj.outputs as Record<string, unknown>)
+                      : "output" in resultObj
+                      ? (resultObj.output as Record<string, unknown>)
+                      : resultObj || {};
+                } else {
+                  // Assume the chain result itself is the output
+                  outputs = { default: chainResultObj };
+                }
+
+                console.log(`Chain ${chainId} processed outputs:`, outputs);
+
+                const hasOutputs =
+                  typeof outputs === "object" &&
+                  outputs &&
+                  Object.keys(outputs).length > 0;
+
+                if (!hasOutputs) return null;
+
+                return (
+                  <div key={chainId} className="space-y-2">
+                    <h5 className="text-sm font-medium text-primary">
+                      {chainId}
+                    </h5>
+
+                    <div className="space-y-2 pl-2 border-l-2 border-border">
+                      {Object.entries(outputs).map(([outputId, output]) => {
+                        console.log(`Output ${chainId}.${outputId}:`, output);
+
+                        // Use the output as-is without trying to extract nested properties
+                        let outputValue = output;
+
+                        // Generate preview content
+                        const previewContent =
+                          outputValue === undefined || outputValue === null
+                            ? "No output available"
+                            : typeof outputValue === "object"
+                            ? JSON.stringify(outputValue).substring(0, 100) +
+                              (JSON.stringify(outputValue).length > 100
+                                ? "..."
+                                : "")
+                            : String(outputValue).substring(0, 100) +
+                              (String(outputValue).length > 100 ? "..." : "");
+
+                        return (
+                          <div key={outputId} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium">
+                                {outputId}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-xs"
+                                onClick={() =>
+                                  openOutputModal(
+                                    chainId,
+                                    outputId,
+                                    outputValue
+                                  )
+                                }
+                              >
+                                View Full Output
+                              </Button>
+                            </div>
+                            <div className="text-xs font-mono p-2 bg-muted/30 rounded border border-border overflow-x-auto">
+                              {previewContent}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
         )}
 
-        {/* Display the full result */}
+        {/* Raw execution result section */}
         <Card className="p-4">
           <h4 className="text-md font-medium mb-2 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            Full Execution Result
+            <Database className="h-4 w-4 text-blue-500" />
+            Raw Execution Result
           </h4>
-          <div className="bg-muted p-3 rounded text-sm font-mono overflow-x-auto whitespace-pre-wrap max-h-[400px] overflow-y-auto">
-            {typeof executionResult === "object" ? (
+
+          <p className="text-sm text-muted-foreground mb-2">
+            Complete execution data including all chain outputs and metadata.
+            Useful for debugging.
+          </p>
+
+          <div
+            className="flex items-center gap-2 p-2 bg-muted/50 rounded cursor-pointer hover:bg-muted transition-colors"
+            onClick={() => toggleOutputExpansion("raw-result")}
+          >
+            <div
+              className="transform transition-transform duration-200"
+              style={{
+                transform: expandedOutputs.has("raw-result")
+                  ? "rotate(90deg)"
+                  : "rotate(0)",
+              }}
+            >
+              ▶
+            </div>
+            <div className="font-mono text-xs truncate flex-1">
+              {JSON.stringify(executionResult).substring(0, 100)}...
+            </div>
+          </div>
+
+          {expandedOutputs.has("raw-result") && (
+            <div className="mt-2 bg-muted p-3 rounded text-sm font-mono overflow-x-auto whitespace-pre-wrap">
               <SyntaxHighlighter
                 language="json"
                 style={theme === "dark" ? vscDarkPlus : oneLight}
                 customStyle={{
                   margin: 0,
-                  padding: 0,
                   background: "transparent",
-                  fontSize: "0.875rem",
+                  maxHeight: "300px",
+                  overflowY: "auto",
                 }}
               >
                 {JSON.stringify(executionResult, null, 2)}
               </SyntaxHighlighter>
-            ) : (
-              String(executionResult)
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       </div>
     );
@@ -428,12 +577,54 @@ export function YaplExecutionSidebar({
               placeholder={`Enter value for ${input}`}
               value={inputValues[input] || ""}
               onChange={(e) => handleInputChange(input, e.target.value)}
-              className="min-h-[100px]"
+              className="min-h-[100px] max-h-[300px] overflow-y-auto"
             />
           </div>
         ))}
       </div>
     );
+  };
+
+  // Helper function to format JSON with highlighting
+  const formatJson = (json: string, isDark: boolean) => {
+    // Colors for dark and light themes
+    const colors = {
+      punctuation: isDark ? "#bbb" : "#555",
+      key: isDark ? "#7dd3fc" : "#0284c7", // light blue
+      string: isDark ? "#a5d6a7" : "#16a34a", // green
+      number: isDark ? "#ffab91" : "#dd6b20", // orange
+      boolean: isDark ? "#ce93d8" : "#9333ea", // purple
+      null: isDark ? "#ef9a9a" : "#dc2626", // red
+    };
+
+    // Replace with spans that have color styling
+    return json
+      .replace(
+        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        (match) => {
+          let color = colors.string; // Default to string color
+          let cls = "string";
+
+          if (/^"/.test(match) && /:$/.test(match)) {
+            color = colors.key; // Object key
+            cls = "key";
+          } else if (/true|false/.test(match)) {
+            color = colors.boolean; // Boolean
+            cls = "boolean";
+          } else if (/null/.test(match)) {
+            color = colors.null; // null
+            cls = "null";
+          } else if (/^-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?$/.test(match)) {
+            color = colors.number; // Number
+            cls = "number";
+          }
+
+          return `<span style="color:${color}" class="${cls}">${match}</span>`;
+        }
+      )
+      .replace(/[{}[\],]/g, (match) => {
+        return `<span style="color:${colors.punctuation}" class="punctuation">${match}</span>`;
+      });
   };
 
   return (
@@ -533,6 +724,71 @@ export function YaplExecutionSidebar({
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Add the output modal */}
+      <Dialog open={selectedOutput !== null} onOpenChange={closeOutputModal}>
+        <DialogContent className="max-w-[95vw] md:max-w-[90vw] w-[800px] max-h-[90vh] flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg">
+              {selectedOutput && (
+                <>
+                  <span className="font-medium">{selectedOutput.chainId}</span>.
+                  <span className="text-muted-foreground">
+                    {selectedOutput.outputId}
+                  </span>
+                </>
+              )}
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={closeOutputModal}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto mt-4 p-4 bg-muted/30 rounded border border-border">
+            {selectedOutput && (
+              <div className="text-sm w-full">
+                {typeof selectedOutput.content === "object" ? (
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    <pre
+                      className={`whitespace-pre-wrap break-all json-output ${
+                        theme === "dark" ? "text-gray-200" : "text-gray-800"
+                      }`}
+                      style={{
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                        fontSize: "0.875rem",
+                        padding: "0.5rem",
+                        width: "100%",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: formatJson(
+                          JSON.stringify(selectedOutput.content, null, 2),
+                          theme === "dark"
+                        ),
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <pre
+                    className="whitespace-pre-wrap break-all max-h-[70vh] overflow-y-auto w-full"
+                    style={{
+                      wordBreak: "break-word",
+                      overflowWrap: "break-word",
+                      padding: "0.5rem",
+                    }}
+                  >
+                    {String(selectedOutput.content || "No content available")}
+                  </pre>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

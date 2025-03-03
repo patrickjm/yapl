@@ -227,6 +227,10 @@ export function CommonPropertiesForm({
                 Add
               </Button>
             </div>
+            <p className="text-sm text-gray-500">
+              Note: Tools aren't supported by editor's executor yet. But you can
+              still add them to your YAPL file.
+            </p>
             <div className="flex flex-wrap gap-2 mt-2">
               {(data.tools || []).map((tool: string, index: number) => (
                 <Badge key={index} className="flex items-center gap-1">
