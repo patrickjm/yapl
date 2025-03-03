@@ -4,6 +4,8 @@
 
 YAPL (YAML Prompting Language) is like a declarative, simpler version of LangChain. You can write YAML files that chain together LLM calls and enforce structured outputs. You can even pass inputs to it and use the Liquid templating engine to dynamically generate prompts!
 
+[Try the interactive YAPL editor and code generator here](https://patrickjm.github.io/yapl/).
+
 ## Installation
 
 ```bash
